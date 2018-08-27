@@ -2,9 +2,9 @@
 #: Title           : sdc                                                                       #
 #: Sypnosis        : sdc [OPTIONS]...                                                          #
 #: Date Created    : Fri 24 May 2018 08:55:21 AM +08  /  Fri May 24 00:55:21 UTC 2018          #
-#: Last Edit       : Mon 27 Aug 2018 12:24:17 PM +08  /  Mon Aug 27 04:24:17 UTC 2018          #
+#: Last Edit       : Mon 27 Aug 2018 12:34:13 PM +08  /  Mon Aug 27 04:34:13 UTC 2018          #
 #: License         : MIT                                                                       #
-#: Version         : 1.1.3                                                                     #
+#: Version         : 1.1.4                                                                     #
 #: Author          : Jason V. Ferrer '<jetchisel@opensuse.org>'                                #
 #: Description     : Navigate to the previous directories by parsing the directories table.    #
 #: Options         : [ahn?]                                                                    #

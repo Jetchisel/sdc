@@ -1,6 +1,9 @@
 
-# sdc - A bash function that allow user to navigate back to the previous directories.
+# sdc
 
+A bash function that allow user to navigate back to the previous directories.
+
+----
 Navigate  back to  the previous navigated  directories  by providing
 the corresponding number in the menu. With or without autocd enabled.
 The sqlite3 directories table created by sdb is being parsed.
