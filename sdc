@@ -2,16 +2,16 @@
 #: Title           : sdc                                                                       #
 #: Sypnosis        : sdc [OPTIONS]...                                                          #
 #: Date Created    : Fri 24 May 2018 08:55:21 AM +08  /  Fri May 24 00:55:21 UTC 2018          #
-#: Last Edit       : Mon 27 Aug 2018 11:54:47 AM +08  /  Mon Aug 27 03:54:47 UTC 2018          #
+#: Last Edit       : Mon 27 Aug 2018 12:05:28 PM +08  /  Mon Aug 27 04:05:28 UTC 2018          #
 #: License         : MIT                                                                       #
-#: Version         : 1.1.1                                                                     #
+#: Version         : 1.1.2                                                                     #
 #: Author          : Jason V. Ferrer '<jetchisel@opensuse.org>'                                #
 #: Description     : Navigate to the previous directories by parsing the directories table.    #
 #: Options         : [ahn?]                                                                    #
 #: Home Page       : https://github.com/Jetchisel/sdc                                          #
 #: ExtComm         : sdb                                                                       #
 # ============================================================================================ #
-##: Prints the name of the script $BASH_SOURCE (less the leading PATHNAME) and the missing apps in one line.
+
 __sdc_name=${BASH_SOURCE##*/}
 
 # ******************************************************************************************** #
@@ -39,7 +39,7 @@ cd () {
 	EOF
   fi
   ## Prints the status of the git directory/repo once inside it, Comment this code until the line with ''fi'' if you shun git!!!
-  if builtin type -P git >/dev/null; then ##: Check if git is installed, print repo status if it is.
+  if builtin type -P git >/dev/null; then
     ! builtin command -p git rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
       builtin printf '\n%s\n\n' "GIT repository detected." && builtin command -p git status
     }
@@ -51,7 +51,7 @@ cd () {
 #                               Function to show the help menu.                                #
 # ******************************************************************************************** #
 
-sdc_help_() { ##: Function to print help/usage.
+sdc_help_() {
   builtin echo '
 Usage: sdc [OPTIONS]...
 
@@ -80,10 +80,10 @@ builtin return
 }
 
 sdc() {
-  ##: Check if bash version is lower than 4, exit with an error if true.
-  if (( BASH_VERSINFO[0] < 4 )); then ##: If bash version is lower than 4.
-    __sdc_warn_ 'This function requires bash 4.0 or newer' 'Please update to a more recent bash.' ##: Print this error message
-    builtin return 1 ##: Exit with an error.
+
+  if (( BASH_VERSINFO[0] < 4 )); then
+    __sdc_warn_ 'This function requires bash 4.0 or newer' 'Please update to a more recent bash.'
+    builtin return 1
   fi
 
   builtin local b=
@@ -108,12 +108,12 @@ sdc() {
   sdc_pwd=${sdc_pwd//$'\n'/\\n}
   max=$(builtin command -p tput lines)
 
-  if builtin type -P tput >/dev/null; then ##: If tput is installed load the variables for the fonts.
-    b=$(builtin command -p tput bold) ##: Bold font
+  if builtin type -P tput >/dev/null; then
+    b=$(builtin command -p tput bold)
     reset=$(builtin command -p tput sgr0)
-    gb=$(builtin command -p tput setaf 2; builtin printf '%s' "$b") ##: Green Bold
-    bb=$(builtin command -p tput setaf 4; builtin printf '%s' "$b") ##: Blue Bold
-    yb=$(builtin command -p tput setaf 3; builtin printf '%s' "$b") ##: Yellow Bold
+    gb=$(builtin command -p tput setaf 2; builtin printf '%s' "$b")
+    bb=$(builtin command -p tput setaf 4; builtin printf '%s' "$b")
+    yb=$(builtin command -p tput setaf 3; builtin printf '%s' "$b")
     underlined=$(builtin command -p tput smul)
     nounderlined=$(builtin command -p tput rmul)
   fi
@@ -124,29 +124,29 @@ sdc() {
 # ******************************************************************************************** #
 # Getops from scratch by D.J. Mills, https://github.com/e36freak/templates/blob/master/options #
 # ******************************************************************************************** #
-##: option string, for short options, very much like getopts, any option followed by a ':' takes a required arg
+
   optstring=hna:
 
   builtin unset options
 
   while (($#)); do
-    case $1 in ##: if option is of type -ab, since the while loop will process each option/argument one by one.
-      -[!-]?*) ##: loop over each character starting with the second
+    case $1 in
+      -[!-]?*)
         for ((i=1; i<${#1}; i++)); do
-          c=${1:i:1} ##: add current char to options
-          options+=("-$c") ##: if option takes a required argument, and it's not the last char, make the rest of the string its argument
+          c=${1:i:1}
+          options+=("-$c")
           if [[ $optstring = *"$c:"* && ${1:i+1} ]]; then
             options+=("${1:i+1}")
             builtin break
           fi
         done
         ;;
-      --?*=*) options+=("${1%%=*}" "${1#*=}");; ##: if option is of type --foo=bar, split on first '='
-      --) options+=(--endopts);; ##: add --endopts for --
-      *) options+=("$1");; ##: otherwise, nothing special
+      --?*=*) options+=("${1%%=*}" "${1#*=}");;
+      --) options+=(--endopts);;
+      *) options+=("$1");;
     esac
     builtin shift
-  done ##: set new positional parameters to altered options
+  done
 
   builtin set -- "${options[@]}"
 
@@ -165,21 +165,21 @@ sdc() {
 #                          Parse the command line arguments/options.                           #
 # ******************************************************************************************** #
 
-  while [[ $1 = -?* ]]; do ##: loop through the options, starts with a dash.
-    case $1 in             ##: -?* means it can be a short option, the ? means one character
+  while [[ $1 = -?* ]]; do
+    case $1 in
       --all|-a)
         builtin shift
         if [[ -z $1 ]]; then
           __sdc_warn_ "-a requires a an argument" "Try '$__sdc_name --help'"
           builtin return 1
-        elif ! [[ $1 = +([0-9]) ]]; then ##: If $1 is not a digit nor a + sign.
+        elif ! [[ $1 = +([0-9]) ]]; then
           __sdc_warn_ "$1 -- '$G$1$R' should be a number" "Try '$__sdc_name --help'"
-          builtin return 1 ##: Exit/return with an error.
+          builtin return 1
         fi
         max=$1
         if ((max > 999)); then
           __sdc_warn_ "$gb$1$reset is too much directories for you!" "Try a smaller number, maybe ${gb}999${reset}?"
-          builtin return 1 ##: Exit/return with an error.
+          builtin return 1
         fi
         all=1
         ;;
@@ -187,7 +187,7 @@ sdc() {
         sdc_help_
         builtin return
         ;;
-     --no-color|-n) ##: If input is one of the following. (do not print colored fonts.)
+     --no-color|-n)
         builtin unset b bb gb reset yb underlined
         ;;
      *)
@@ -219,16 +219,16 @@ sdc() {
   sdc_commands+=("ORDER BY id DESC LIMIT $max;")
   __sdc_pwd=$(builtin pwd)
   __sdc_pwd=${__sdc_pwd//$'\n'/\\n}
-  dirst=$(builtin pwd -P ; builtin printf x) ##: pwd -P prints the actual directories and the link just in case..(additional x character inside the $().)
-  dirst=${dirst%$'\nx'} ##: Remove the newline including the x.
+  dirst=$(builtin pwd -P ; builtin printf x)
+  dirst=${dirst%$'\nx'}
   builtin printf '\n%s%s%s%s%s %s%s' "$yb" "$underlined" "Current working directory:" "$reset" "$nounderlined" "$bb" "$__sdc_pwd " "$reset"
   builtin printf '\n'
 
   n=1
   while builtin read -u7 -r directories; do
     [[ $directories = $dirst ]] && builtin continue
-    printf '%s %3d. %s %s\n' "$gb" "$n" "$reset" "$bb$directories$reset" ##: Print the directories with numbers and with colors (the cool part ;))
-    ArrayDirs[$((n++))]="$directories" ##: Load all the directories in the Asscociative array _AssocDirs_, doing [key]=value
+    printf '%s %3d. %s %s\n' "$gb" "$n" "$reset" "$bb$directories$reset"
+    ArrayDirs[$((n++))]="$directories"
   done 7< <( __sdb_sqlite < <(builtin printf '%s ' "${sdc_commands[@]}") )
 
   header=(
@@ -236,34 +236,34 @@ sdc() {
     " $yb[${gb}1${reset}${yb}-$reset$gb$((${#ArrayDirs[@]}+1))$reset$yb]▶$reset"
   )
 
-  builtin printf -v prompts '%s %3d. %s %s\n\n%s%s%s%s%s%s ' "${header[@]}" ##: Use printf to save the prompt in a variable.
+  builtin printf -v prompts '%s %3d. %s %s\n\n%s%s%s%s%s%s ' "${header[@]}"
 
-  if (( ${#ArrayDirs[@]} <= 9 )); then ##: Test if the total directories is less than or equal to 9.
-    options=(-r -p "$prompts" -s -n 1) ##: Enable the ONE-CLICK enter button when choosing a number.
+  if (( ${#ArrayDirs[@]} <= 9 )); then
+    options=(-r -p "$prompts" -s -n 1)
   else
-    options=(-r -p "$prompts") ##: If more than 9 disable it so user can enter two digits or more.
+    options=(-r -p "$prompts")
   fi
 
-  builtin read "${options[@]}"  ##: Feed the options to read.
+  builtin read "${options[@]}"
   case $REPLY in
-    [Qq]|[Qq][Uu][Ii][Tt]|$((${#ArrayDirs[@]}+1))|'') ##: If input is one of the following do nothing & exit the sdc function.
+    [Qq]|[Qq][Uu][Ii][Tt]|$((${#ArrayDirs[@]}+1))|'')
       builtin printf '\n%s %s\n' "${yb}Directory did not changed:$reset" "$bb${__sdc_pwd//$'\n'/\\n}$reset"
       builtin return
       ;;
-    *[!0-9]*|0*) ##: If input is/are not numbers then print errors and exit the sdc function with an error status.
+    *[!0-9]*|0*)
       builtin printf '\n%s %s %s\n' "${b}invalid option$reset" -- "$gb$REPLY$reset" >&2
       builtin return 1
       ;;
   esac
 
-  RangeMessage=("$gb$REPLY$reset" "${gb}1$reset" "$gb$((${#ArrayDirs[@]} + 1))$reset") ##: Load the error message in the array RangeMessage when the input is out of range.
+  RangeMessage=("$gb$REPLY$reset" "${gb}1$reset" "$gb$((${#ArrayDirs[@]} + 1))$reset")
 
-  if (( REPLY > $(( ${#ArrayDirs[@]} + 1 )) )); then ##: Test if input is more than the total value of directories.
-    builtin printf "\n[%s] out of range from [%s-%s]" "${RangeMessage[@]}" >&2 ##: Exit with an error message and error status.
+  if (( REPLY > $(( ${#ArrayDirs[@]} + 1 )) )); then
+    builtin printf "\n[%s] out of range from [%s-%s]" "${RangeMessage[@]}" >&2
     builtin return 1
   fi
 
-  for f in "${!ArrayDirs[@]}"; do ##: If input is ok, meaning it passed the test above. loop through the directories recently visited
+  for f in "${!ArrayDirs[@]}"; do
     if [[ $REPLY = $f ]]; then
       cd "${ArrayDirs[$f]//\\n/$'\n'}" || builtin return
       builtin printf '\ncd -- %s\n' "${ArrayDirs[$f]//\\n/$'\n'}"
