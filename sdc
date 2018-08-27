@@ -2,9 +2,9 @@
 #: Title           : sdc                                                                       #
 #: Sypnosis        : sdc [OPTIONS]...                                                          #
 #: Date Created    : Fri 24 May 2018 08:55:21 AM +08  /  Fri May 24 00:55:21 UTC 2018          #
-#: Last Edit       : Mon 27 Aug 2018 10:25:35 AM +08  /  Mon Aug 27 02:25:35 UTC 2018          #
+#: Last Edit       : Mon 27 Aug 2018 11:16:23 AM +08  /  Mon Aug 27 03:16:23 UTC 2018          #
 #: License         : MIT                                                                       #
-#: Version         : 1.0.0                                                                     #
+#: Version         : 1.1.0                                                                     #
 #: Author          : Jason V. Ferrer '<jetchisel@opensuse.org>'                                #
 #: Description     : Navigate to the previous directories by parsing the directories table.    #
 #: Options         : [ahn?]                                                                    #
@@ -37,6 +37,12 @@ cd () {
 	INSERT INTO directories( epoch, ppid, user_hosts, cwd, salt )
 	VALUES( "$(builtin command -p date -d 'now' '+%s')", "$PPID", "$__sdb_user_host", "${sdc_pwd//\"/\"\"}", "$__sdb_salt" );
 	EOF
+  fi
+  ## Prints the status of the git directory/repo once inside it, Comment this code until the line with ''fi'' if you shun git!!!
+  if builtin type -P git >/dev/null; then ##: Check if git is installed, print repo status if it is.
+    ! builtin command -p git rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
+      builtin printf '\n%s\n\n' "GIT repository detected." && builtin command -p git status
+    }
   fi
   builtin return
 }
