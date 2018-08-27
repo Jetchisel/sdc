@@ -2,9 +2,9 @@
 #: Title           : sdc                                                                       #
 #: Sypnosis        : sdc [OPTIONS]...                                                          #
 #: Date Created    : Fri 24 May 2018 08:55:21 AM +08  /  Fri May 24 00:55:21 UTC 2018          #
-#: Last Edit       : Mon 27 Aug 2018 11:16:23 AM +08  /  Mon Aug 27 03:16:23 UTC 2018          #
+#: Last Edit       : Mon 27 Aug 2018 11:54:47 AM +08  /  Mon Aug 27 03:54:47 UTC 2018          #
 #: License         : MIT                                                                       #
-#: Version         : 1.1.0                                                                     #
+#: Version         : 1.1.1                                                                     #
 #: Author          : Jason V. Ferrer '<jetchisel@opensuse.org>'                                #
 #: Description     : Navigate to the previous directories by parsing the directories table.    #
 #: Options         : [ahn?]                                                                    #
@@ -212,7 +212,7 @@ sdc() {
 # ******************************************************************************************** #
 
   if ((!all)); then
-    sdc_commands+=("AND (salt=\"$__sdb_salt\")")
+    sdc_commands+=("AND (salt= '$__sdb_salt')")
   fi
 
   sdc_commands+=("AND (user_hosts = '$__sdb_user_host')")
