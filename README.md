@@ -1,5 +1,5 @@
 
-# sdc - A bash function that allow user to navigate the currently remembered directories.
+# sdc - A bash function that allow user to navigate back to the previous directories.
 
 Navigate  back to  the previous navigated  directories  by providing
 the corresponding number in the menu. With or without autocd enabled.
