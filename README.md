@@ -61,6 +61,4 @@ sdc
 
 ----
 This is almost the same functionality as **mcd** only **sdc** is parsing the **directories** table.
-
-
-
+Also please don't abuse the loops through the directories!

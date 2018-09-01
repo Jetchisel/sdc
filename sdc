@@ -2,15 +2,19 @@
 #: Title           : sdc                                                                       #
 #: Sypnosis        : sdc [OPTIONS]...                                                          #
 #: Date Created    : Fri 24 May 2018 08:55:21 AM +08  /  Fri May 24 00:55:21 UTC 2018          #
-#: Last Edit       : Mon 27 Aug 2018 12:34:13 PM +08  /  Mon Aug 27 04:34:13 UTC 2018          #
+#: Last Edit       : Sat 01 Sep 2018 11:15:26 AM +08  /  Sat Sep  1 03:15:26 UTC 2018          #
 #: License         : MIT                                                                       #
-#: Version         : 1.1.4                                                                     #
+#: Version         : 1.1.5                                                                     #
 #: Author          : Jason V. Ferrer '<jetchisel@opensuse.org>'                                #
 #: Description     : Navigate to the previous directories by parsing the directories table.    #
 #: Options         : [ahn?]                                                                    #
 #: Home Page       : https://github.com/Jetchisel/sdc                                          #
-#: ExtComm         : sdb                                                                       #
+#: ExtComm         : sdb [https://github.com/Jetchisel/sdb]                                    #
 # ============================================================================================ #
+
+# ******************************************************************************************** #
+#                             The scriptname without the pathname.                             #
+# ******************************************************************************************** #
 
 __sdc_name=${BASH_SOURCE##*/}
 
@@ -18,7 +22,7 @@ __sdc_name=${BASH_SOURCE##*/}
 #                    Warn function to print error messages to stderr.                          #
 # ******************************************************************************************** #
 
-__sdc_warn_() {
+__sdc_warn_ () {
   builtin printf '%s: %s\n%s\n' "$__sdc_name" "$@" >&2
 }
 
@@ -34,15 +38,21 @@ cd () {
 
   if [[ $(__sdb_recent_pwd) != $sdc_pwd ]]; then
     __sdb_sqlite <<-EOF
-	INSERT INTO directories( epoch, ppid, user_hosts, cwd, salt )
-	VALUES( "$(builtin command -p date -d 'now' '+%s')", "$PPID", "$__sdb_user_host", "${sdc_pwd//\"/\"\"}", "$__sdb_salt" );
+	INSERT INTO directories (
+	epoch, ppid, user_hosts, cwd, salt
+	)
+	VALUES (
+	STRFTIME ('+%s', 'now'), "$PPID", "$__sdb_user_host", "${sdc_pwd//\"/\"\"}", "$__sdb_salt"
+	);
 	EOF
   fi
-  ## Prints the status of the git directory/repo once inside it, Comment this code until the line with ''fi'' if you shun git!!!
-  if builtin type -P git >/dev/null; then
-    ! builtin command -p git rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
-      builtin printf '\n%s\n\n' "GIT repository detected." && builtin command -p git status
-    }
+## Prints the status of the git directory/repo once inside it, Comment this code until the line with ''fi'' if you shun git!!!
+  if ! [[ $(builtin pwd) = *.git/* || $(builtin pwd) = *.git ]]; then
+    if builtin type -P git >/dev/null; then
+        ! builtin command -p git rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
+        builtin printf '\n%s\n\n' "GIT repository detected." && builtin command -p git status
+      }
+    fi
   fi
   builtin return
 }
@@ -51,7 +61,7 @@ cd () {
 #                               Function to show the help menu.                                #
 # ******************************************************************************************** #
 
-sdc_help_() {
+sdc_help_ () {
   builtin echo '
 Usage: sdc [OPTIONS]...
 
@@ -79,8 +89,7 @@ repository.
 builtin return
 }
 
-sdc() {
-
+sdc () {
   if (( BASH_VERSINFO[0] < 4 )); then
     __sdc_warn_ 'This function requires bash 4.0 or newer' 'Please update to a more recent bash.'
     builtin return 1
@@ -104,9 +113,16 @@ sdc() {
   builtin local directories=
   builtin local first_sdc_commands=
   builtin local sdc_pwd=
+  builtin declare -A ArrayDirs
+  builtin declare -a options sdc_commands RangeMessage Choice
+
   sdc_pwd=$(builtin pwd)
   sdc_pwd=${sdc_pwd//$'\n'/\\n}
-  max=$(builtin command -p tput lines)
+  max=$LINES
+
+# ******************************************************************************************** #
+#   If tput is installed or within the PATH of the user, then do some eyecandy bling stuff.    #
+# ******************************************************************************************** #
 
   if builtin type -P tput >/dev/null; then
     b=$(builtin command -p tput bold)
@@ -114,12 +130,10 @@ sdc() {
     gb=$(builtin command -p tput setaf 2; builtin printf '%s' "$b")
     bb=$(builtin command -p tput setaf 4; builtin printf '%s' "$b")
     yb=$(builtin command -p tput setaf 3; builtin printf '%s' "$b")
+    max=$(builtin command -p tput lines)
     underlined=$(builtin command -p tput smul)
     nounderlined=$(builtin command -p tput rmul)
   fi
-
-  builtin declare -A ArrayDirs
-  builtin declare -a options sdc_commands RangeMessage header
 
 # ******************************************************************************************** #
 # Getops from scratch by D.J. Mills, https://github.com/e36freak/templates/blob/master/options #
@@ -170,7 +184,7 @@ sdc() {
       --all|-a)
         builtin shift
         if [[ -z $1 ]]; then
-          __sdc_warn_ "-a requires a an argument" "Try '$__sdc_name --help'"
+          __sdc_warn_ "-a requires a digit as an argument" "Try '$__sdc_name --help'"
           builtin return 1
         elif ! [[ $1 = +([0-9]) ]]; then
           __sdc_warn_ "$1 -- '$G$1$R' should be a number" "Try '$__sdc_name --help'"
@@ -205,6 +219,10 @@ sdc() {
   first_sdc_commands="
     SELECT DISTINCT cwd FROM directories WHERE 1"
 
+# ******************************************************************************************** #
+#                   Add the first_sdc_commands into the array sdc_commands.                    #
+# ******************************************************************************************** #
+
   sdc_commands+=("$first_sdc_commands")
 
 # ******************************************************************************************** #
@@ -217,10 +235,20 @@ sdc() {
 
   sdc_commands+=("AND (user_hosts = '$__sdb_user_host')")
   sdc_commands+=("ORDER BY id DESC LIMIT $max;")
+
+# ******************************************************************************************** #
+#                       Do something with the directories in a variable.                       #
+# ******************************************************************************************** #
+
   __sdc_pwd=$(builtin pwd)
   __sdc_pwd=${__sdc_pwd//$'\n'/\\n}
   dirst=$(builtin pwd -P ; builtin printf x)
   dirst=${dirst%$'\nx'}
+
+# ******************************************************************************************** #
+#                                    The menu starts here.                                     #
+# ******************************************************************************************** #
+
   builtin printf '\n%s%s%s%s%s %s%s' "$yb" "$underlined" "Current working directory:" "$reset" "$nounderlined" "$bb" "$__sdc_pwd " "$reset"
   builtin printf '\n'
 
@@ -229,20 +257,28 @@ sdc() {
     [[ $directories = $dirst ]] && builtin continue
     printf '%s %3d. %s %s\n' "$gb" "$n" "$reset" "$bb$directories$reset"
     ArrayDirs[$((n++))]="$directories"
-  done 7< <( __sdb_sqlite < <(builtin printf '%s ' "${sdc_commands[@]}") )
+  done 7< <(__sdb_sqlite <<< "${sdc_commands[@]}")
 
-  header=(
-  "$gb" $((${#ArrayDirs[@]} + 1 )) "$reset" "$reset${yb}Quit$reset" "$yb" "$underlined" 'Pick a number from' "$nounderlined" "$reset"
+  Choice=(
+    "$gb" $((${#ArrayDirs[@]}+1)) "$reset" "$reset${yb}Quit$reset" "$yb" "$underlined" 'Pick a number from' "$nounderlined" "$reset"
     " $yb[${gb}1${reset}${yb}-$reset$gb$((${#ArrayDirs[@]}+1))$reset$yb]▶$reset"
   )
 
-  builtin printf -v prompts '%s %3d. %s %s\n\n%s%s%s%s%s%s ' "${header[@]}"
+  builtin printf -v prompts '%s %3d. %s %s\n\n%s%s%s%s%s%s ' "${Choice[@]}"
+
+# ******************************************************************************************** #
+#  If numbers are less than or equals to nine then just press ze button and cd will execute.   #
+# ******************************************************************************************** #
 
   if (( ${#ArrayDirs[@]} <= 9 )); then
     options=(-r -p "$prompts" -s -n 1)
   else
     options=(-r -p "$prompts")
   fi
+
+# ******************************************************************************************** #
+#                             Parse the answer in the Choice menu.                             #
+# ******************************************************************************************** #
 
   builtin read "${options[@]}"
   case $REPLY in
@@ -258,10 +294,18 @@ sdc() {
 
   RangeMessage=("$gb$REPLY$reset" "${gb}1$reset" "$gb$((${#ArrayDirs[@]} + 1))$reset")
 
+# ******************************************************************************************** #
+#  If the given number/answer is less/more than what the menu is showing, exit with an error.  #
+# ******************************************************************************************** #
+
   if (( REPLY > $(( ${#ArrayDirs[@]} + 1 )) )); then
     builtin printf "\n[%s] out of range from [%s-%s]" "${RangeMessage[@]}" >&2
     builtin return 1
   fi
+
+# ******************************************************************************************** #
+#        Loop through the ArrayDirs and check if it matches the answer then cd into it.        #
+# ******************************************************************************************** #
 
   for f in "${!ArrayDirs[@]}"; do
     if [[ $REPLY = $f ]]; then
